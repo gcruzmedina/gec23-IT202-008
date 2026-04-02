@@ -29,12 +29,23 @@ function processCars($cars) {
     $currentYear = null; // determine current year
     $processedCars = []; // result array
     $classic_age = 25; // don't change this value
+
     // Start edits
-   
+    foreach ($cars as $car) {
+        $age = $currentYear - $car["year"];
+        $processedCars[] = [
+            "id" => $car["id"],
+            "make" => $car["make"],
+            "model" => $car["model"],
+            "year" => $car["year"],
+            "age" => $age,
+            "isClassic" => $age >= $classic_age
+        ];
+    }
+}
     // End edits
     echo "<pre>" . var_export($processedCars, true) . "</pre>";
-    
-}
+
 $ucid = "gec23"; // replace with your UCID
 printHeader($ucid, 2); 
 ?>
