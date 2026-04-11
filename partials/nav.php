@@ -1,4 +1,5 @@
 <?php
+require(__DIR__."/../lib/functions.php");
 // checking to see if domain has a port number attached (localhost)
 $domain = $_SERVER["HTTP_HOST"];
 if (strpos($domain, ":")) {
@@ -17,4 +18,3 @@ if ($domain != "localhost") {
     ]);
 }
 session_start();
-require(__DIR__."/../lib/functions.php");
