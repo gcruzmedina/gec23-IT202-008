@@ -1,4 +1,5 @@
 <?php
+ob_start();// Temp fix to resolve output buffer issues that send the header() early that cause issues with the header("Location:...") below
 require(__DIR__ . "/../../partials/nav.php");
 ?>
 <h3>Login</h3>
@@ -39,12 +40,10 @@ if (isset($_POST["email"], $_POST["password"])) {
     // Sanitize and validate email
     $email = sanitize_email($email);
     if (!is_valid_email($email)) {
-        //echo "Invalid email address";
         flash("Invalid email address.", "danger");
         $hasError = true;
     }
     if (empty($password)) {
-        //echo "Password must not be empty<br>";
         flash("Password must not be empty.", "danger");
         echo "Email must not be empty<br>";
         $hasError = true;
