@@ -58,7 +58,7 @@ nav li {
 }
 
 nav li a {
-    color: rgb(42, 182, 135);
+    color: rgb(41, 44, 217);
     padding: .25rem;
 }
 nav li a:hover {
@@ -67,20 +67,20 @@ nav li a:hover {
 
 nav::after {
     text-align: center;
-    content: "(*Edit the hideous css)";
-    color:red;
+    content: "(tybg #swag)";
+    color:rgb(100, 116, 241);
 
 }
 label{
-    border:#212529 dashed 2px;
-    background-color: bisque;
+    border:#056fd8 groove 2px;
+    background-color: rgb(119, 188, 209);
 }
 input {
     border-radius: 9%;
     padding: .5rem;
 }
 input:hover{
-    transform: rotateZ(90deg);
+    transform: rotateZ(0deg);
 }
 form,h3 {
     display: flex;
