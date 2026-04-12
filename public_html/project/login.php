@@ -23,7 +23,7 @@ require(__DIR__ . "/../../partials/nav.php");
 </script>
 <?php
 //TODO 2: add PHP Code
-if (isset($_POST["email"], $_POST["password"])) {
+if (isset($_POST["email"], $_POST["password"])) 
 
     $email = se($_POST, "email", "", false);
     $password = se($_POST, "password", "", false);
@@ -117,20 +117,4 @@ if (isset($_POST["email"], $_POST["password"])) {
 
 <?php
 require(__DIR__."/../../partials/flash.php");
-
-                        echo "Welcome, $email!<br>";
-                    } else {
-                        echo "Invalid password<br>";
-                    }
-                } else {
-                    echo "Email not found<br>";
-                }
-            }
-        } catch (Exception $e) {
-            echo "There was an error logging in<br>"; // user-friendly message
-            error_log("Login Error: " . var_export($e, true)); // log the technical error for debugging
-        }
-    }
-    
-}
 ?>
