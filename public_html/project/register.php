@@ -21,14 +21,57 @@ require(__DIR__ . "/../../partials/nav.php");
     </div>
     <input type="submit" value="Register" />
 </form>
+
 <script>
     function validate(form) {
-        //TODO 1: implement JavaScript validation (you'll do this on your own towards the end of Milestone1)
-        //ensure it returns false for an error and true for success
+        let email = form.email.value.trim();
+        let username = form.username.value.trim();
+        let password = form.password.value;
+        let confirm = form.confirm.value;
 
-        return true;
+        let hasError = false;
+
+        // Email validation
+        if (!email) {
+            alert("Email must not be empty.");
+            hasError = true;
+        } else {
+            let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert("Invalid email address.");
+                hasError = true;
+            }
+        }
+
+        // Username validation
+        let usernamePattern = /^[a-z0-9_-]+$/;
+        if (!usernamePattern.test(username)) {
+            alert("Username must be lowercase, alphanumerical, and can only contain _ or -");
+            hasError = true;
+        }
+
+        // Password validation
+        if (!password) {
+            alert("Password must not be empty.");
+            hasError = true;
+        } else if (password.length < 8) {
+            alert("Password must be at least 8 characters long.");
+            hasError = true;
+        }
+
+        // Confirm password validation
+        if (!confirm) {
+            alert("Confirm password must not be empty.");
+            hasError = true;
+        } else if (password !== confirm) {
+            alert("Passwords must match.");
+            hasError = true;
+        }
+
+        return !hasError; // stops submission if false
     }
 </script>
+
 <?php
 //TODO 2: add PHP Code
 if (isset($_POST["email"], $_POST["password"], $_POST["confirm"], $_POST["username"])) {
@@ -77,24 +120,23 @@ if (isset($_POST["email"], $_POST["password"], $_POST["confirm"], $_POST["userna
     if (!$hasError) {
         // TODO 4: Hash password and store record in DB
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $db = getDB(); // available due to the `require()` of `functions.php`
-        // Code for inserting user data into the database
+        $db = getDB();
         $stmt = $db->prepare("INSERT INTO Users (email, password, username) VALUES (:email, :password, :username)");
         try {
             $stmt->execute([':email' => $email, ':password' => $hashed_password, ':username' => $username]);
-   
+
             flash("Successfully registered! You can now log in.", "success");
         } catch(PDOException $e) {
-            // Handle duplicate email/username
             users_check_duplicate($e);
         }
         catch (Exception $e) {
             flash("There was an error registering. Please try again.", "danger");
-            error_log("Registration Error: " . var_export($e, true)); // log the technical error for debugging
+            error_log("Registration Error: " . var_export($e, true));
         }
     }
 }
 ?>
+
 <?php
 require(__DIR__ . "/../../partials/flash.php");
 reset_session();
