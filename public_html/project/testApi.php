@@ -35,3 +35,4 @@ if (isset($_GET["anime"])) {
 </div>
 <?php
 require(__DIR__ . "/../../partials/flash.php");
+//gec23 4/20
