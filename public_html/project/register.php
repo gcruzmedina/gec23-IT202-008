@@ -1,5 +1,30 @@
 <?php
 require(__DIR__ . "/../../partials/nav.php");
+$form = [
+    ["type" => "email", "id" => "email", "name" => "email", "label" => "Email", "rules" => ["required" => true]],
+    [
+        "type" => "text",
+        "id" => "username",
+        "name" => "username",
+        "label" => "Username",
+        "rules" => [
+            "required" => true,
+            "maxlength" => 30,
+            "title" => "3-16 lowercase letters, numbers, underscores, or hyphens"
+        ]
+    ],
+    ["type" => "password", "id" => "password", "name" => "password", "label" => "Password", "rules" => ["required" => true, "minlength" => 8]],
+    ["type" => "password", "id" => "confirm", "name" => "confirm", "label" => "Confirm Password", "rules" => ["required" => true, "minlength" => 8]],
+];
+?>
+<div class="container-fluid">
+    <h3>Register</h3>
+    <form onsubmit="return validate(this)" method="POST">
+        <?php foreach ($form as $field): ?>
+            <?php render_input($field); ?>
+        <?php endforeach; ?>
+        
+        <?php render_button(["text" => "Register", "type" => "submit"]); ?>
 ?>
 <h3>Register</h3>
 <form onsubmit="return validate(this)" method="POST">
@@ -139,4 +164,5 @@ if (isset($_POST["email"], $_POST["password"], $_POST["confirm"], $_POST["userna
 
 <?php
 require(__DIR__ . "/../../partials/flash.php");
+reset_session();
 ?>
