@@ -3,7 +3,7 @@ require(__DIR__ . "/../../partials/nav.php");
 
 $result = [];
 if (isset($_GET["anime"])) {
-    $data = ["query" => $_GET["anime"]];
+    $data = ["q" => $_GET["anime"]];
     $endpoint = "https://anime-data-scraper-api.p.rapidapi.com/v1/anime/popular";
     $isRapidAPI = true;
     $rapidAPIHost = "anime-data-scraper-api.p.rapidapi.com";
@@ -35,3 +35,4 @@ if (isset($_GET["anime"])) {
 </div>
 <?php
 require(__DIR__ . "/../../partials/flash.php");
+//gec23 4/20
