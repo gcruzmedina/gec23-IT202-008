@@ -73,28 +73,14 @@ require(__DIR__ . "/../lib/functions.php");
                 <?php endif; ?>
                 <?php if (has_role("Admin")) : ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Stocks
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" aria-current="page" href="<?php get_url('admin/create_stock.php', true); ?>">Create Stock</a>
-                            </li>
-                            <li><a class="dropdown-item" aria-current="page" href="<?php get_url('admin/list_stocks.php', true); ?>">List Stock</a>
                             </li>
                         </ul>
                     </li>
                 <?php endif; ?>
                 <?php if (has_role("Admin")) : ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Companies
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li class="nav-item">
-                                <a class="nav-link" aria-current="page" href="<?php get_url('admin/create_company.php', true); ?>">Create Company</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" aria-current="page" href="<?php get_url('admin/list_companies.php', true); ?>">List Companies</a>
                             </li>
                         </ul>
                     </li>
