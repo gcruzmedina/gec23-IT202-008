@@ -1,6 +1,5 @@
-
 <?php
-require(__DIR__ . "/../../../partials/nav.php");
+require_once(__DIR__ . "/../../../lib/functions.php");
 
 if (!has_role("Admin")) {
     flash("You don't have permission to view this page", "warning");
@@ -74,6 +73,7 @@ if (isset($_POST["action"])) {
         }
     }
 }
+require(__DIR__ . "/../../../partials/nav.php");
 ?>
 <div class="container-fluid">
     <h3>Create or Fetch Anime</h3>
