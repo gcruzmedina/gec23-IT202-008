@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 function getDB()
 {
     global $db;
+    global $dbhost, $dbport, $dbdatabase, $dbuser, $dbpass;
 
     if (!isset($db)) {
         try {
