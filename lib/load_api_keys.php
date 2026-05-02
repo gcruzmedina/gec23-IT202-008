@@ -1,7 +1,7 @@
 <?php
 // string array containing env keys to lookup (this allows usage of multiple APIs)
 $env_keys = ["ANIME_API_KEY"];
-$ini = @parse_ini_file(".env");
+$ini = @parse_ini_file(__DIR__ . "/../.env");
 
 $API_KEYS = [];
 foreach ($env_keys as $key) {
