@@ -1,7 +1,13 @@
 <?php
 
 // Try environment variable first (deployment)
-$url = getenv("DB_URL");
+$env = parse_ini_file(__DIR__ . "/../.env");
+
+if (!$env || !isset($env["DB_URL"])) {
+    die("Failed to load DB_URL from .env");
+}
+
+$url = $env["DB_URL"];
 
 // If not found, read .env manually (safe)
 if (!$url) {
@@ -27,7 +33,7 @@ if (!$url) {
 }
 
 // Parse URL
-$db_url = parse_url($url);
+$db_url = parse_url(str_replace("mysql://", "http://", $url));
 
 // Validate
 if (
