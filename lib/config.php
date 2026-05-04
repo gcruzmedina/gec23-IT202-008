@@ -1,41 +1,30 @@
 <?php
 
-// Try environment variable first (deployment)
-$env = parse_ini_file(__DIR__ . "/../.env");
+// 1. Try Render environment variables FIRST
+$url = getenv("DB_URL");
 
-if (!$env || !isset($env["DB_URL"])) {
-    die("Failed to load DB_URL from .env");
-}
-
-$url = $env["DB_URL"];
-
-// If not found, read .env manually (safe)
+// 2. Fallback to .env (for local development only)
 if (!$url) {
     $envPath = __DIR__ . "/../.env";
 
     if (file_exists($envPath)) {
-        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $env = parse_ini_file($envPath);
 
-        foreach ($lines as $line) {
-            if (strpos(trim($line), "#") === 0) continue;
-
-            if (strpos($line, "DB_URL=") === 0) {
-                $url = trim(substr($line, 7));
-                break;
-            }
+        if ($env && isset($env["DB_URL"])) {
+            $url = $env["DB_URL"];
         }
     }
 }
 
-// Hard fail if still missing
+// 3. Hard fail if still missing
 if (!$url) {
     throw new Exception("Missing DB_URL configuration");
 }
 
-// Parse URL
+// 4. Parse database URL
 $db_url = parse_url(str_replace("mysql://", "http://", $url));
 
-// Validate
+// 5. Validate
 if (
     !$db_url ||
     !isset($db_url["host"], $db_url["user"], $db_url["pass"], $db_url["path"])
@@ -45,7 +34,7 @@ if (
     throw new Exception("Invalid DB_URL format");
 }
 
-// Assign values
+// 6. Assign values
 $dbhost = $db_url["host"];
 $dbuser = $db_url["user"];
 $dbpass = $db_url["pass"];
