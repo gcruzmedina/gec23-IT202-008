@@ -84,6 +84,10 @@ $form = [
                             <p>Episodes: <?php echo $anime["episodes"] ?? "N/A"; ?></p>
                             <p>Score: <?php echo $anime["score"] ?? "N/A"; ?></p>
                             <p>Status: <?php echo $anime["status"] ?? "N/A"; ?></p>
+                            <a href="view.php?id=<?php echo $anime['id']; ?>" 
+                            class="btn btn-primary">
+                             View
+                            </a>
                         </div>
                     </div>
                 </div>
