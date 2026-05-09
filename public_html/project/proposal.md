@@ -13,11 +13,11 @@
 select it to open/view it, then copy that url for the below items -->
 
 - Milestone 1
-  - (add link to milestone1.pdf from milestone1 branch)  
+  - https://github.com/gcruzmedina/gec23-IT202-008/blob/prod/public_html/gec23_IT202-008-S2026_it202-milestone-1-2026_04-13-2026_23-48-42.pdf
 - Milestone 2
-  - (add link to milestone2.pdf from milestone2 branch)
+  - https://github.com/gcruzmedina/gec23-IT202-008/blob/prod/public_html/gec23_IT202-008-S2026_it202-milestone-2_05-04-2026_15-24-46.pdf
 - Milestone 3
-  - (add link to milestone3.pdf from milestone3 branch)
+  - https://github.com/gcruzmedina/gec23-IT202-008/blob/prod/public_html/gec23_IT202-008-S2026_it202-milestone-3_05-08-2026_23-08-56.pdf
 - Demo Link
   - (add youtube link to unlisted or public demo) Note you'll need to verify your youtube account to upload videos > 15mins
-  
+  https://youtu.be/1dlUJPnjhfg
