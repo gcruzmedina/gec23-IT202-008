@@ -12,14 +12,14 @@ if ($id <= 0) {
 
 // Load record
 $db = getDB();
-$stmt = $db->prepare("SELECT * FROM IT202_G26_Anime WHERE mal_id = :id LIMIT 1");
+$stmt = $db->prepare("SELECT * FROM IT202_G26_Anime WHERE anime_id = :id LIMIT 1");
 $stmt->execute([":id" => $id]);
 $anime = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Handle missing record
 if (!$anime) {
     flash("Anime not found", "warning");
-    (header("Location: " . get_url("project/landing.php")));
+    (header("Location: " . get_url("landing.php")));
     exit;
 }
 require(__DIR__ . "/../../partials/nav.php");
