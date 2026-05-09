@@ -34,7 +34,7 @@ if (isset($_POST["anime_id"])) {
 }
 
 $stmt = $db->query("
-    SELECT id, title
+    SELECT anime_id, title
     FROM IT202_G26_Anime
     ORDER BY title ASC
 ");
@@ -48,13 +48,13 @@ require(__DIR__ . "/../../partials/nav.php");
 
     <h1>Generate Anime Card</h1>
 
-    <form method="POST">
+    <form method="POST" action="">
 
         <select name="anime_id" class="form-control mb-3">
 
             <?php foreach ($anime as $a): ?>
 
-                <option value="<?php echo $a["id"]; ?>">
+                <option value="<?php echo $a["anime_id"]; ?>">
                     <?php echo htmlspecialchars($a["title"]); ?>
                 </option>
 
@@ -70,4 +70,4 @@ require(__DIR__ . "/../../partials/nav.php");
 
 </div>
 
-<?php require(__DIR__ . "/../../../partials/footer.php"); ?>
+<?php //require(__DIR__ . "/../../../partials/footer.php"); ?>
