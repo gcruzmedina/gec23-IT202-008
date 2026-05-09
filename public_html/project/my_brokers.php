@@ -233,6 +233,16 @@ $form = [
 
     <h1>My Anime Cards</h1>
 
+    <!-- STATS SECTION -->
+    <p>
+        Showing <?php echo count($results); ?> result(s)
+    </p>
+
+    <p>
+        Total Possible Results:
+        <?php echo count($anime_ids); ?>
+    </p>
+
     <form>
 
         <div class="row">
@@ -256,6 +266,14 @@ $form = [
 
         <a href="?" class="btn btn-secondary">
             Reset
+        </a>
+
+        <!-- REMOVE ALL ASSOCIATIONS BUTTON -->
+        <a
+            href="<?php se(get_url("project/remove_all_anime.php")); ?>"
+            class="btn btn-danger"
+        >
+            Remove All Associations
         </a>
 
     </form>
@@ -310,6 +328,27 @@ $form = [
                                 Power:
                                 <?php echo $entry["power"]; ?>
                             </p>
+
+                            <!-- BUTTONS -->
+                            <div class="d-flex gap-2">
+
+                                <!-- VIEW BUTTON -->
+                                <a
+                                    href="<?php se(get_url("project/view.php?id=" . $entry["id"])); ?>"
+                                    class="btn btn-primary"
+                                >
+                                    View
+                                </a>
+
+                                <!-- REMOVE RELATIONSHIP BUTTON -->
+                                <a
+                                    href="<?php se(get_url("project/delete_user_anime.php?id=" . $entry["id"])); ?>"
+                                    class="btn btn-danger"
+                                >
+                                    Remove
+                                </a>
+
+                            </div>
 
                         </div>
 
