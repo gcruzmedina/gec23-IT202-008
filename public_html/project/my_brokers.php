@@ -1,145 +1,192 @@
 <?php
 require(__DIR__ . "/../../partials/nav.php");
+
 if (is_logged_in(true)) {
     error_log("Session data: " . var_export($_SESSION, true));
 }
 
-$allowed_columns = ["name", "rarity", "life", "attack", "defense", "power", "created"];
+$allowed_columns = [
+    "title",
+    "rarity",
+    "power",
+    "episodes",
+    "score",
+    "created"
+];
+
 $sort = ["asc", "desc"];
 
 $params = [];
-// I need a two step query for this due to the relationship of Brokers and Stocks
-// I want the limit to apply to the brokers and fetch the matched broker's stocks.
 
-// Step 1: Get broker IDs only
-$query = "SELECT b.id FROM `IT202-M25-Brokers` b JOIN `IT202-M25-UserBrokers` ub on ub.broker_id = b.id WHERE 1=1";
-$query .= " AND user_id = :user_id"; // fetch for logged in user
+/*
+    STEP 1:
+    GET USER'S ANIME IDS
+*/
+
+$query = "
+SELECT a.id
+FROM `AnimeCards` a
+JOIN `UserAnimeCards` ua
+    ON ua.anime_id = a.id
+WHERE 1=1
+";
+
+$query .= " AND user_id = :user_id";
+
 $params[":user_id"] = get_user_id();
-// Filtering logic
+
+/*
+    FILTERS
+*/
+
 if (count($_GET) > 0) {
-    $name = se($_GET, "name", "", false);
-    if (!empty($name)) {
-        $query .= " AND name LIKE :name";
-        $params[":name"] = "%$name%";
+
+    $title = se($_GET, "title", "", false);
+
+    if (!empty($title)) {
+        $query .= " AND title LIKE :title";
+        $params[":title"] = "%$title%";
     }
 
     $rarity = se($_GET, "rarity", "", false);
+
     if (is_numeric($rarity)) {
         $query .= " AND rarity = :rarity";
         $params[":rarity"] = $rarity;
     }
 
     $column = se($_GET, "column", "", false);
+
     if (empty($column) || !in_array($column, $allowed_columns)) {
         $column = "created";
     }
 
     $order = se($_GET, "order", "", false);
+
     if (empty($order) || !in_array($order, $sort)) {
         $order = "desc";
     }
 
-    $query .= " ORDER BY b.$column $order";
+    $query .= " ORDER BY a.$column $order";
 }
-// outside of the $_GET check to always provide a limit
+
+/*
+    LIMIT
+*/
+
 $limit = se($_GET, "limit", 10, false);
+
 if (!empty($limit) && is_numeric($limit)) {
+
     if ($limit < 1 || $limit > 100) {
         $limit = 10;
     }
+
     $query .= " LIMIT :limit";
+
     $params[":limit"] = $limit;
 }
-// Execute broker query
+
+/*
+    EXECUTE QUERY
+*/
+
 $db = getDB();
+
 $stmt = $db->prepare($query);
-error_log("Broker Query: $query");
-error_log("Params: " . var_export($params, true));
 
 foreach ($params as $key => $val) {
+
     $type = match (true) {
         is_numeric($val) => PDO::PARAM_INT,
         is_bool($val) => PDO::PARAM_BOOL,
         is_null($val) => PDO::PARAM_NULL,
         default => PDO::PARAM_STR,
     };
+
     $stmt->bindValue($key, $val, $type);
 }
 
-$broker_ids = [];
+$anime_ids = [];
+
 try {
+
     $stmt->execute();
+
     $r = $stmt->fetchAll();
+
     if ($r) {
-        // Map to flat array of IDs
-        $broker_ids = array_map(fn($row) => $row["id"], $r);
+
+        $anime_ids = array_map(
+            fn($row) => $row["id"],
+            $r
+        );
     }
+
 } catch (PDOException $e) {
-    error_log("Error fetching brokers: " . var_export($e, true));
+
+    error_log("Error fetching anime: " . var_export($e, true));
+
     flash("Unhandled error occurred", "danger");
 }
 
-// step 2
-// Fetch each broker's stocks
-// Map each broker's stocks
+/*
+    STEP 2:
+    FETCH FULL ANIME DATA
+*/
+
 $results = [];
-error_log("Broker Ids: " . var_export($broker_ids, true));
-if ($broker_ids) {
-    // Question marks are positional placeholders
-    $in = str_repeat('?,', count($broker_ids) - 1) . '?';
-    $query = "SELECT b.id, name, rarity, life, attack, defense, power, symbol, price, shares
-        FROM `IT202-M25-Brokers` b
-        LEFT JOIN `IT202-M25-BrokerStocks` bs ON b.id = bs.broker_id
-        LEFT JOIN `IT202-M25-Stocks` s ON bs.stock_id = s.id
-        WHERE b.id IN ($in)";
+
+if ($anime_ids) {
+
+    $in = str_repeat('?,', count($anime_ids) - 1) . '?';
+
+    $query = "
+    SELECT
+        a.id,
+        title,
+        rarity,
+        power,
+        episodes,
+        score,
+        status,
+        image_url
+    FROM `AnimeCards` a
+    WHERE a.id IN ($in)
+    ";
+
     $stmt = $db->prepare($query);
-    $stmt->execute($broker_ids);
-    $brokers = $stmt->fetchAll();
 
-    // Aggregate
-    foreach ($brokers as $row) {
-        $id = $row["id"];
-        if (!isset($results[$id])) {
-            $results[$id] = [
-                "broker" => [
-                    "id" => $id,
-                    "name" => $row["name"],
-                    "rarity" => $row["rarity"],
-                    "life" => $row["life"],
-                    "attack" => $row["attack"],
-                    "defense" => $row["defense"],
-                    "power" => $row["power"]
-                ],
-                "stocks" => []
-            ];
-        }
+    $stmt->execute($anime_ids);
 
-        if (!empty($row["symbol"])) {
-            $results[$id]["stocks"][] = [
-                "symbol" => $row["symbol"],
-                "price" => $row["price"],
-                "shares" => $row["shares"]
-            ];
-        }
-    }
-    $results = array_values($results); // reindex for rendering
+    $results = $stmt->fetchAll();
 }
 
+/*
+    FILTER FORM
+*/
 
-// Build filter form
-$cols = array_map(fn($col) => [$col => $col], $allowed_columns);
+$cols = array_map(
+    fn($col) => [$col => $col],
+    $allowed_columns
+);
+
 array_unshift($cols, ["" => "Select Column"]);
 
-$order = array_map(fn($dir) => [$dir => $dir], $sort);
+$order = array_map(
+    fn($dir) => [$dir => $dir],
+    $sort
+);
+
 array_unshift($order, ["" => "Select Order"]);
 
 $form = [
     [
         "type" => "text",
-        "id" => "name",
-        "name" => "name",
-        "label" => "Broker Name",
-        "value" => se($_GET, "name", "", false),
+        "id" => "title",
+        "name" => "title",
+        "label" => "Anime Title",
+        "value" => se($_GET, "title", "", false),
     ],
     [
         "type" => "number",
@@ -147,7 +194,10 @@ $form = [
         "name" => "rarity",
         "label" => "Rarity",
         "value" => se($_GET, "rarity", "", false),
-        "rules" => ["min" => 0, "max" => 5]
+        "rules" => [
+            "min" => 0,
+            "max" => 5
+        ]
     ],
     [
         "type" => "select",
@@ -171,35 +221,108 @@ $form = [
         "name" => "limit",
         "label" => "Limit",
         "value" => se($_GET, "limit", "10", false),
-        "rules" => ["min" => 1, "max" => 100]
+        "rules" => [
+            "min" => 1,
+            "max" => 100
+        ]
     ]
 ];
 ?>
+
 <div class="container-fluid">
-    <h1>My Brokers</h1>
+
+    <h1>My Anime Cards</h1>
+
     <form>
+
         <div class="row">
+
             <?php foreach ($form as $field): ?>
+
                 <div class="col">
+
                     <?php render_input($field); ?>
+
                 </div>
+
             <?php endforeach; ?>
+
         </div>
-        <?php render_button(["text" => "Search", "type" => "submit"]); ?>
-        <a href="?" class="btn btn-secondary">Reset</a>
+
+        <?php render_button([
+            "text" => "Search",
+            "type" => "submit"
+        ]); ?>
+
+        <a href="?" class="btn btn-secondary">
+            Reset
+        </a>
+
     </form>
 
     <?php if (count($results) == 0): ?>
-        <p>No brokers found</p>
+
+        <p>No anime cards found</p>
+
     <?php else: ?>
+
         <div class="row">
+
             <?php foreach ($results as $entry): ?>
-                <div class="col">
-                    <?php render_broker_card($entry); ?>
+
+                <div class="col-md-3">
+
+                    <div class="card p-2 m-2 h-100">
+
+                        <img
+                            src="<?php echo $entry["image_url"]; ?>"
+                            class="card-img-top"
+                            alt="anime image"
+                        >
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                <?php echo $entry["title"]; ?>
+                            </h5>
+
+                            <p>
+                                Episodes:
+                                <?php echo $entry["episodes"]; ?>
+                            </p>
+
+                            <p>
+                                Score:
+                                <?php echo $entry["score"]; ?>
+                            </p>
+
+                            <p>
+                                Status:
+                                <?php echo $entry["status"]; ?>
+                            </p>
+
+                            <p>
+                                Rarity:
+                                <?php echo $entry["rarity"]; ?>
+                            </p>
+
+                            <p>
+                                Power:
+                                <?php echo $entry["power"]; ?>
+                            </p>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
             <?php endforeach; ?>
+
         </div>
+
     <?php endif; ?>
+
 </div>
 
 <?php require(__DIR__ . "/../../partials/footer.php"); ?>
