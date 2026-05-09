@@ -1,26 +1,28 @@
 <?php
-require(__DIR__ . "/../../partials/nav.php");
-
+require(__DIR__ . "/../../lib/functions.php");
 // Get ID
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // Handle invalid ID
 if ($id <= 0) {
     flash("Invalid or missing ID", "danger");
-    die(header("Location: " . get_url("landing.php")));
+    (header("Location: " . get_url("landing.php")));
+    exit;
 }
 
 // Load record
 $db = getDB();
-$stmt = $db->prepare("SELECT * FROM IT202_G26_Anime WHERE id = :id LIMIT 1");
+$stmt = $db->prepare("SELECT * FROM IT202_G26_Anime WHERE mal_id = :id LIMIT 1");
 $stmt->execute([":id" => $id]);
 $anime = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Handle missing record
 if (!$anime) {
     flash("Anime not found", "warning");
-    die(header("Location: " . get_url("landing.php")));
+    (header("Location: " . get_url("project/landing.php")));
+    exit;
 }
+require(__DIR__ . "/../../partials/nav.php");
 ?>
 
 <a href="edit.php?id=<?php echo $anime['id']; ?>" class="btn btn-warning">Edit</a>

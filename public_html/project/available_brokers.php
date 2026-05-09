@@ -1,95 +1,146 @@
 <?php
 require(__DIR__ . "/../../partials/nav.php");
-require_once(__DIR__ . "/../lib/user_helpers.php");
+
 if (is_logged_in(true)) {
     error_log("Session data: " . var_export($_SESSION, true));
 }
-store_current_route();
-$allowed_columns = ["name", "rarity", "life", "attack", "defense", "power", "created"];
+
+$allowed_columns = ["title", "rarity", "power", "episodes", "score", "created"];
 $sort = ["asc", "desc"];
 
 $params = [];
-// I need a two step query for this due to the relationship of Brokers and Stocks
-// I want the limit to apply to the brokers and fetch the matched broker's stocks.
 
-// Step 1: Get broker IDs only
-// Note: I can't join on stocks here otherwise it'll give me incorrect results
-$from = " FROM `IT202-M25-Brokers` b";
-$query = "SELECT b.id";
-$count = "SELECT count(b.id) as total";
+/*
+    STEP 1:
+    Get anime IDs only
+*/
+
+$from = " FROM `AnimeCards` a";
+$query = "SELECT a.id";
+$count = "SELECT count(a.id) as total";
 $count_where = "";
-// filter for soft delete
-$where = " WHERE 1=1 AND b.is_active = 1 AND NOT EXISTS (select id from `IT202-M25-UserBrokers` ub WHERE ub.broker_id = b.id)";
 
-// Filtering logic
+// Only show active anime cards not owned by users
+$where = " WHERE 1=1 
+    AND a.is_active = 1 
+    AND NOT EXISTS (
+        SELECT id 
+        FROM `UserAnimeCards` ua 
+        WHERE ua.anime_id = a.id
+    )";
+
+/*
+    FILTERING
+*/
 if (count($_GET) > 0) {
-    $name = se($_GET, "name", "", false);
-    if (!empty($name)) {
-        $where .= " AND name LIKE :name";
-        $params[":name"] = "%$name%";
+
+    $title = se($_GET, "title", "", false);
+
+    if (!empty($title)) {
+        $where .= " AND title LIKE :title";
+        $params[":title"] = "%$title%";
     }
 
     $rarity = se($_GET, "rarity", "", false);
+
     if (is_numeric($rarity)) {
         $where .= " AND rarity = :rarity";
         $params[":rarity"] = $rarity;
     }
 
     $column = se($_GET, "column", "", false);
+
     if (empty($column) || !in_array($column, $allowed_columns)) {
         $column = "created";
     }
 
     $order = se($_GET, "order", "", false);
+
     if (empty($order) || !in_array($order, $sort)) {
         $order = "desc";
     }
 
-    $where .= " ORDER BY b.$column $order";
+    $where .= " ORDER BY a.$column $order";
 }
-// outside of the $_GET check to always provide a limit
+
+/*
+    LIMIT
+*/
+
 $limit = se($_GET, "limit", 10, false);
+
 if (!empty($limit) && is_numeric($limit)) {
+
     if ($limit < 1 || $limit > 100) {
         $limit = 10;
     }
-    $count_where = $where; // count doesn't use limit
+
+    $count_where = $where;
+
     $where .= " LIMIT :limit";
-    // better practice to explicitly cast than to use is_numeric() for PDO binding
+
     $params[":limit"] = (int)$limit;
 }
-// Execute broker query
-$broker_ids = selectAll("$query $from $where", $params);
-if ($broker_ids) {
-    $broker_ids = array_map(fn($row) => $row["id"], $broker_ids);
-}
-error_log("Broker Ids: " . var_export($broker_ids, true));
 
-// step 2
-$results = [];
-if ($broker_ids) {
-    // Question marks are positional placeholders
-    $in = str_repeat('?,', count($broker_ids) - 1) . '?';
-    $query = "SELECT b.id, name, rarity, life, attack, defense, power, symbol, price, shares
-        FROM `IT202-M25-Brokers` b
-        JOIN `IT202-M25-BrokerStocks` bs ON b.id = bs.broker_id
-        JOIN `IT202-M25-Stocks` s ON bs.stock_id = s.id
-        WHERE b.id IN ($in)";
-    // Fetch each broker's stocks
-    $brokers = selectAll($query, $broker_ids);
-    // Map each broker's stocks
-    $results = aggregate_broker_data($brokers);
+/*
+    EXECUTE QUERY
+*/
+
+$anime_ids = selectAll("$query $from $where", $params);
+
+if ($anime_ids) {
+    $anime_ids = array_map(fn($row) => $row["id"], $anime_ids);
 }
-unset($params[":limit"]); // limit isn't used with the count query
-// Execute count query
-$count_results = selectAll("$count $from $count_where", $params, true)[0];
-// transform result data for results_header.php
+
+$results = [];
+
+/*
+    STEP 2:
+    Fetch full anime data
+*/
+
+if ($anime_ids) {
+
+    $in = str_repeat('?,', count($anime_ids) - 1) . '?';
+
+    $query = "SELECT 
+        a.id,
+        title,
+        rarity,
+        power,
+        episodes,
+        score,
+        status,
+        image_url
+    FROM `AnimeCards` a
+    WHERE a.id IN ($in)";
+
+    $results = selectAll($query, $anime_ids);
+}
+
+unset($params[":limit"]);
+
+/*
+    COUNT QUERY
+*/
+
+$count_results = selectAll(
+    "$count $from $count_where",
+    $params,
+    true
+);
+
+$count_results = $count_results[0] ?? ["total" => 0];
+
 $result_stats = [
     "current" => count($results),
     "total" => $count_results["total"]
 ];
 
-// Build filter form
+/*
+    FILTER FORM
+*/
+
 $cols = array_map(fn($col) => [$col => $col], $allowed_columns);
 array_unshift($cols, ["" => "Select Column"]);
 
@@ -99,10 +150,10 @@ array_unshift($order, ["" => "Select Order"]);
 $form = [
     [
         "type" => "text",
-        "id" => "name",
-        "name" => "name",
-        "label" => "Broker Name",
-        "value" => se($_GET, "name", "", false),
+        "id" => "title",
+        "name" => "title",
+        "label" => "Anime Title",
+        "value" => se($_GET, "title", "", false),
     ],
     [
         "type" => "number",
@@ -138,32 +189,84 @@ $form = [
     ]
 ];
 ?>
+
 <div class="container-fluid">
-    <h1>Available Brokers</h1>
-    <small>These brokers are not hired by anyone.</small>
+
+    <h1>Available Anime Cards</h1>
+
+    <small>
+        These anime cards are not owned by any users.
+    </small>
+
     <form>
         <div class="row">
+
             <?php foreach ($form as $field): ?>
+
                 <div class="col">
                     <?php render_input($field); ?>
                 </div>
+
             <?php endforeach; ?>
+
         </div>
+
         <?php render_button(["text" => "Search", "type" => "submit"]); ?>
-        <a href="?" class="btn btn-secondary">Reset</a>
+
+        <a href="?" class="btn btn-secondary">
+            Reset
+        </a>
     </form>
-    <?php results_header($result_stats); ?>
+
+    <?php //results_header($result_stats); ?>
+
     <?php if (count($results) == 0): ?>
-        <p>No brokers found</p>
+
+        <p>No anime cards found</p>
+
     <?php else: ?>
+
         <div class="row">
+
             <?php foreach ($results as $entry): ?>
-                <div class="col">
-                    <?php render_broker_card($entry); ?>
+
+                <div class="col-md-3">
+
+                    <div class="card p-2 m-2 h-100">
+
+                        <img
+                            src="<?php echo $entry["image_url"]; ?>"
+                            class="card-img-top"
+                            alt="anime image"
+                        >
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                <?php echo $entry["title"]; ?>
+                            </h5>
+
+                            <p>Episodes: <?php echo $entry["episodes"]; ?></p>
+
+                            <p>Score: <?php echo $entry["score"]; ?></p>
+
+                            <p>Status: <?php echo $entry["status"]; ?></p>
+
+                            <p>Rarity: <?php echo $entry["rarity"]; ?></p>
+
+                            <p>Power: <?php echo $entry["power"]; ?></p>
+
+                        </div>
+                    </div>
+
                 </div>
+
             <?php endforeach; ?>
+
         </div>
+
     <?php endif; ?>
+
 </div>
 
 <?php require(__DIR__ . "/../../partials/footer.php"); ?>

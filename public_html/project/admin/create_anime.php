@@ -26,7 +26,7 @@ if (isset($_POST["action"])) {
 
             if (!empty($result)) {
                 $animeData = [
-                    "anime_id" => $result["mal_id"] ?? uniqid(),
+                    "anime_id" => $result["id"] ?? uniqid(),
                     "title" => $result["title"] ?? "",
                     "type" => $result["type"] ?? "",
                     "status" => $result["status"] ?? "",
